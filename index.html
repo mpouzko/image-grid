@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Image grid</title>
+	<meta charset="utf-8">
+	<style type="text/css">
+		* {
+			user-select:none;
+		}
+		canvas {
+			background: #000;
+		 
+			border:10px solid #000;
+		}
+		body {
+			text-align: center;
+		}
+		.dot {
+			position: absolute;
+			width:20px;
+			height: 20px;
+			background: lime;
+			border-radius: 50px;
+			z-index:999;
+			cursor:pointer;
+		}
+		#container {
+			width:1200px;
+			 
+		}
+	</style>
+</head>
+<body>
+<div id="container" width=1200 height=800 >
+	<canvas width=1200 height=800 id="canvas">
+		
+	</canvas>
+ 
+</div>
+<script type="text/javascript" src="app.js"></script>
+</body>
+</html>
