@@ -8,12 +8,13 @@
 			user-select:none;
 		}
 		canvas {
-			background: #000;
+			/*background: #000;*/
 		 
 			border:10px solid #000;
 		}
 		body {
 			text-align: center;
+			background: #000;
 		}
 		.dot {
 			position: absolute;
@@ -32,18 +33,30 @@
 			margin: 10px auto;
 			padding:20px 40px;
 		}
+		.hidden {
+			display: none;
+		}
+		#imgcanvas {
+			position:absolute;
+			top:0;
+			left:0;
+			z-index: -1;
+		}
 	</style>
 </head>
 <body>
+<canvas width=1200 height=800 id="imgcanvas"></canvas>
 <div id="container" width=1200 height=800 >
-	<canvas width=1200 height=800 id="canvas">
-		
-	</canvas>
- 
+	
+	<canvas width=1200 height=800 id="canvas"></canvas>
 </div>
  <div>
  	<button id="undo"> UNDO </button>
+ 	<button id="go"> GO </button>
  </div>
-<script type="text/javascript" src="app.js"></script>
+ <canvas width=1200 height=800 id="canvas2" class="hidden"></canvas>
+ <img src="maxresdefault.jpg" class="hidden" id ="imgsrc" width=1200 height=800>
+ <script type="text/javascript" src="perspective.js"></script>
+ <script type="text/javascript" src="app.js"></script>
 </body>
 </html>
