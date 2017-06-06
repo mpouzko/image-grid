@@ -1,5 +1,5 @@
 "use strict";
-(function() {
+window.addEventListener('load', function() {
     var CONFIG = {};
     CONFIG.step = 20;
     var history = [];
@@ -322,4 +322,4 @@
     }
     */
     drawGrid();
-}).call(this);
+});

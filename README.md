@@ -1,6 +1,9 @@
 # image-grid
 responsive image grid interface with image transformation
 
+### v 0.3.1
+small fix
+
 ### v 0.3
 - искажение изображения сразу видно на сетке
 - используется https://github.com/wanadev/perspective.js (patched)
