@@ -1,6 +1,9 @@
 # image-grid
 responsive image grid interface with image transformation
 
+### v 0.4
+повышена производительность
+
 ### v 0.3.1
 small fix
 
