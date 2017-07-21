@@ -1,6 +1,11 @@
 # image-grid
 responsive image grid interface with image transformation
 
+### v 0.5
+добавил поддержку FireFox
+точное расположение сетки по краям
+адаптируется под размер экрана и изображение (надо протестить)
+
 ### v 0.4
 повышена производительность
 
