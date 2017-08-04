@@ -1,14 +1,67 @@
 "use strict";
 window.addEventListener('load', function() {
+
     var CONFIG = {};
     CONFIG.step = 20;
     var history = [];
+    var texture;
     var canvas, context, i, len, pattern, point, ref;
+    var currentStep = 1;
     // [x,y]
-    pattern = [
+
+    // 6 rows = 16.6666
+    // cols = 4* 0.071    3*0.0656     4*0.057    3*0.032      4*0,0257
+
+
+    //pattern = generatePattern([ [4, 0.075], [3, 0.070], [4, 0.063], [3, 0.0375], [4, 0.03125]  ], [[6, 0.1666]]);
+    pattern = generatePattern([ [3, 0.095], [3, 0.080], [3, 0.078], [3, 0.048], [3, 0.04]  ], [[6, 0.1666]]);
+    
+    function generatePattern(rowsParams, colParams) {
+        //генерирует паттерн на основе параметров колонок и строк : [ (кол-во элементов), (размер каждого в сотых долях) ]
+
+        var _pattern = [];
+        var acc_width = 0;
+        for (let row of rowsParams) {
+           // console.log(row);
+            for (i = 0; i<row[0]; i++) {
+
+                
+                var acc_height = 0;
+
+                var _col = [];
+                for (let col of colParams) {
+                    for (j = 0; j<col[0]; j++) {
+
+                        _col.push([acc_width, acc_height]);
+                        acc_height += col[1];
+
+                    }
+                }
+                
+
+                _col.push([acc_width,1]);//!!!????
+                _pattern.push(_col);
+                acc_width += row[1];
+                if (acc_width > 1) {
+                    acc_width = 1;
+                }
+                //console.log(acc_width);
+
+            }
+        }
+        for (i=0;i<_col.length; i++) {
+            _col[i][0] = 1;
+        }
+        //_pattern.push(_col);
+        return _pattern;
+
+    }
+    // cols = 4* 0.096    3*0.063     4*0.057    3*0.03      4*0,024
+
+   /* pattern = [
         [
-            [0, 0],
-            [0, 0.2],
+            [0, 0], //x=0 y =0
+            [0, 0.2], //x=0 y=0.2
             [0, 0.6],
             [0, 0.7],
             [0, 1]
@@ -34,30 +87,30 @@ window.addEventListener('load', function() {
             [1, 0.7],
             [1, 1]
         ]
-    ];
+    ];*/
     canvas = document.getElementById("canvas");
-
     var imgsrc = document.getElementById("imgsrc");
     var canvas2 = document.getElementById("canvas2");
-
     var imgcanvas = document.getElementById("imgcanvas");
-
-    
     var container = document.getElementById("container");
     var points = [];
     var pieces = [];
+    var corners = [];
     var corrX,corrY;
     var rowCount = pattern.length; //4
     var colCount = pattern[0].length; //3
     var gridHeight, gridWidth;
     calculateGridSize();
     context = canvas.getContext("2d");
-    context.lineWidth = 2;
-    context.strokeStyle = 'lime';
+    
     var context2 = canvas2.getContext("2d");
     var imgcontext = imgcanvas.getContext("2d");
+    imgcontext.lineWidth = 2;
+    imgcontext.strokeStyle = 'lime';
 
     for (var i = 0; i < pattern.length; i++) {
+        
+        
         var row = pattern[i];
         points[i] = [];
         pieces[i] = [];
@@ -69,7 +122,7 @@ window.addEventListener('load', function() {
             newEl.setAttribute("colIndex", j);
             var isCorner = false;
             //отметить угловые точки
-            if ((j == 0 || j == rowCount - 1) && (i == 0 || i == colCount - 1)) isCorner = true;
+            if ((j == 0 || j == colCount - 1) && (i == 0 || i == rowCount - 1)) isCorner = true;
             newEl.setAttribute("iscorner", isCorner);
             //отметить точки  как перемещаемые           
             newEl.draggable = true;
@@ -77,45 +130,64 @@ window.addEventListener('load', function() {
                 e.dataTransfer.setData('text/plain',null);
                 var s = e.target.style;
                 s.borderRadius = '0px';
-
             }
             newEl.ondrag = function(e) {}
-            newEl.ondragend = function(e) {
-                
-                var s = e.target.style;
-                s.borderRadius = '50px'
-                var newX = e.pageX ==0 ? e.screenX : e.pageX;
-                var newY = e.pageY ==0 ? e.screenY : e.pageY;
-                var minX = false;
-                var maxY = false;
-                var minY = false;
-                var maxX = false;
-                var rowIndex = parseInt(e.target.getAttribute("rowIndex"));
-                var colIndex = parseInt(e.target.getAttribute("colIndex"));
-                for (let sibling of getSiblings(e.target)) {
 
-                    var sX = parseInt(sibling.style.left) - 10;
-                    var sY = parseInt(sibling.style.top) - 10;
-                    if (rowIndex > 0) minX = (minX === false) ? sX : (minX > sX ? sX : minX);
-                    else minX = 0;
-                    if (colIndex > 0) minY = (minY === false) ? sY : (minY > sY ? sY : minY);
-                    else minY = 0;
-                    if (rowIndex < (rowCount - 1)) maxX = (maxX === false) ? sX : (maxX < sX ? sX : maxX);
-                    else maxX = canvas.width;
-                    if (colIndex < (colCount - 1)) maxY = (maxY === false) ? sY : (maxY < sY ? sY : maxY);
-                    else maxY = canvas.height;
-                }
-/*                console.log(minX,minY,maxX,maxY);
-                console.log(newX,newY);*/
-                if ((newX > minX) && (newX < maxX) && (newY > minY) && (newY < maxY)) {
-                    history.push([rowIndex, colIndex, parseInt(s.left), parseInt(s.top)]);
+            if (isCorner == true) {
+
+                newEl.ondragend = function(e) {
+                    var s = e.target.style;
+                    s.borderRadius = '50px';
+                    var newX = e.pageX ==0 ? e.screenX : e.pageX;
+                    var newY = e.pageY ==0 ? e.screenY : e.pageY;
+                    var rowIndex = parseInt(e.target.getAttribute("rowIndex"));
+                    var colIndex = parseInt(e.target.getAttribute("colIndex"));
+                    var hNeighbour = points[ ( rowIndex == 0 ? rowCount-1 : 0 ) ][colIndex];
+                    var vNeighbour = points[ rowIndex ][ ( colIndex == 0 ? colCount-1 : 0 )];
                     s.top = newY - 10 + "px";
                     s.left = newX - 10 + "px";
-                    
-                }
-                drawGrid();
-                reDraw();
+                    drawTexture();
 
+                }
+                corners.push(newEl);
+            }
+            else {
+                newEl.ondragend = function(e) {
+                    return;
+                    var s = e.target.style;
+                    s.borderRadius = '50px'
+                    var newX = e.pageX ==0 ? e.screenX : e.pageX;
+                    var newY = e.pageY ==0 ? e.screenY : e.pageY;
+                    var minX = false;
+                    var maxY = false;
+                    var minY = false;
+                    var maxX = false;
+                    var rowIndex = parseInt(e.target.getAttribute("rowIndex"));
+                    var colIndex = parseInt(e.target.getAttribute("colIndex"));
+                    for (let sibling of getSiblings(e.target)) {
+
+                        var sX = parseInt(sibling.style.left) - 10;
+                        var sY = parseInt(sibling.style.top) - 10;
+                        if (rowIndex > 0) minX = (minX === false) ? sX : (minX > sX ? sX : minX);
+                        else minX = 0;
+                        if (colIndex > 0) minY = (minY === false) ? sY : (minY > sY ? sY : minY);
+                        else minY = 0;
+                        if (rowIndex < (rowCount - 1)) maxX = (maxX === false) ? sX : (maxX < sX ? sX : maxX);
+                        else maxX = canvas.width;
+                        if (colIndex < (colCount - 1)) maxY = (maxY === false) ? sY : (maxY < sY ? sY : maxY);
+                        else maxY = canvas.height;
+                    }
+
+                    if ((newX > minX) && (newX < maxX) && (newY > minY) && (newY < maxY)) {
+                        history.push([rowIndex, colIndex, parseInt(s.left), parseInt(s.top)]);
+                        s.top = newY - 10 + "px";
+                        s.left = newX - 10 + "px";
+                        
+                    }
+                    drawGrid();
+                    reDraw();
+
+                }
             }
             corrX = 0;
             corrY = 0;
@@ -132,48 +204,44 @@ window.addEventListener('load', function() {
             points[i][j] = newEl;
             if (i < (rowCount - 1) && j < (colCount - 1)) {
                 //режем мсходное изображение на кусочки, и сохраняем в массив
-                // if ( i == 1 &&  j== 1 ) {
                 var newImage = new Image();
-                newImage.width = toWidth(canvas, pattern[i + 1][j][0] - row[j][0]);
-                newImage.height = toHeight(canvas, row[j + 1][1] - row[j][1]);
+                newImage.width = toWidth(imgsrc, pattern[i + 1][j][0] - row[j][0]);
+                newImage.height = toHeight(imgsrc, row[j + 1][1] - row[j][1]);
                 canvas2.width = newImage.width;
                 canvas2.height = newImage.height;
                 context2.clearRect(0, 0, canvas2.width, canvas2.height);
-                context2.drawImage(imgsrc, toWidth(canvas, row[j][0]), toHeight(canvas, row[j][1]), gridWidth, gridHeight, 0, 0, gridWidth, gridHeight);
+                context2.drawImage(imgsrc, toWidth(imgsrc, row[j][0]), toHeight(imgsrc, row[j][1]), gridWidth, gridHeight, 0, 0, gridWidth, gridHeight);
                 newImage.src = canvas2.toDataURL("image/png");
                 pieces[i][j] = newImage;
-
-                // console.log ( newImage.src );
+              
             }
         }
     }
-    /*window.show = function( i , j ) {
-        var piece = pieces[i][j];
-        console.log(piece.src);
-    }
-*/
-    function drawGrid() {
+   
+    function drawGrid( ) {
         //рисует сетку, 
-    
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        context.beginPath();
+     //   imgcontext.clearRect(0, 0, canvas.width, canvas.height);
+        imgcontext.beginPath();
         for (var i = 0; i < points.length; i++) {
             var row = points[i];
             for (var j = 0; j < row.length; j++) {
                 var point = points[i][j];
-                var pX = parseInt(point.style.left) - 10;
-                var pY = parseInt(point.style.top) - 10;
+                var pX = parseInt(point.style.left) - 13;
+                var pY = parseInt(point.style.top) - 13;
+                pX = pX >0 ? pX:1;
+                pY = pY >1 ? pY:1;
                 for (let sibling of getSiblings(point)) {
-                    context.moveTo(pX, pY);
-                    var sX = parseInt(sibling.style.left) - 10;
-                    var sY = parseInt(sibling.style.top) - 10;
-                    context.lineTo(sX, sY);
-                    console.log(pX,pY,sX,sY);
+                    imgcontext.moveTo(pX, pY);
+                    var sX = parseInt(sibling.style.left) - 13;
+                    var sY = parseInt(sibling.style.top) - 13;
+                    sX = sX > 1 ? sX : 1;
+                    sY = sY > 1 ? sY : 1;
+                    imgcontext.lineTo(sX, sY);
+                   // console.log(pX,pY,sX,sY);
                 }
             }
         }
-        context.stroke();
-        
+        imgcontext.stroke();
     }
 
     function reDraw() {
@@ -183,8 +251,6 @@ window.addEventListener('load', function() {
         for (var i = 0; i < (pattern.length - 1); i++) {
             var row = pattern[i];
             for (var j = 0; j < (row.length - 1); j++) {
-                /*corrX = (i + 2) == pattern.length ? 2: 0;
-                corrY = (j + 2) == row.length ? 2: 0;*/
                 var piece = pieces[i][j];
                 var coords = [];
                 coords.push(getXY(points[i][j]));
@@ -220,14 +286,16 @@ window.addEventListener('load', function() {
     }
 
     function toWidth(obj, val) {
-        var res = obj.width * val;
+
+        var res = (obj.naturalWidth == undefined ? obj.width : obj.naturalWidth )* val;
         return parseInt(res);
     }
 
     function toHeight(obj, val) {
-        var res = obj.height * val;
+        var res = (obj.naturalHeight ==undefined ? obj.height : obj.naturalHeight ) * val;
         return parseInt(res);
     }
+
     var undo = document.getElementById("undo");
     undo.addEventListener("click", function() {
         if (history.length == 0) return;
@@ -302,6 +370,7 @@ window.addEventListener('load', function() {
             var effectiveHeight = w / ratio; 
         }
  
+
         imgcanvas.width = effectiveWidth;
         imgcanvas.height = effectiveHeight;
         container.width = effectiveWidth;
@@ -311,15 +380,71 @@ window.addEventListener('load', function() {
         canvas.height = effectiveHeight;
         canvas2.width = effectiveWidth;
         canvas2.height = effectiveHeight;
-        imgsrc.width = effectiveWidth;
-        imgsrc.height = effectiveHeight;
+       /* imgsrc.width = effectiveWidth;
+        imgsrc.height = effectiveHeight;*/
 
         gridHeight = effectiveHeight;
         gridWidth = effectiveWidth;
-    }
-   
 
+    }
+
+    HTMLElement.prototype.hide = function() {
+        this.style.display = "none";        
+    };
+    HTMLElement.prototype.show = function() {
+        this.style.display = "block";        
+    };
+
+    function step1() {
+        texture = new Image();
+
+        texture.src = imgcanvas.toDataURL("image/png");
+
+        imgcontext.clearRect(0, 0, imgcanvas.width, imgcanvas.height);
+        context.clearRect(0, 0, imgcanvas.width, imgcanvas.height);
+        for (let point of getAllPoints()) {
+            if ( point.getAttribute("iscorner") != "true") {
+                point.hide();
+            }
+        }
+
+       var coords = [];
+        //console.log(corners);
+        coords.push(getXY(corners[0]));
+        coords.push(getXY(corners[2]));
+        coords.push(getXY(corners[3]));
+        coords.push(getXY(corners[1]));
+        
+       var p = new Perspective(imgcontext, texture);
+       p.draw(coords);     
+    }
+
+    function drawTexture() {
+
+
+        imgcontext.clearRect(0, 0, imgcanvas.width, imgcanvas.height);
+        
+        
+
+       var coords = [];
+        //console.log(corners);
+        coords.push(getXY(corners[0]));
+        coords.push(getXY(corners[2]));
+        coords.push(getXY(corners[3]));
+        coords.push(getXY(corners[1]));
+        
+       var p = new Perspective(imgcontext, texture);
+       p.draw(coords);     
+
+    }
+
+
+    //init App
+
+   reDraw();
    drawGrid();
-   imgcontext.drawImage(imgsrc,0,0,gridWidth,gridHeight);
+   
+   step1();
+   
 
 });
